@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MANDRIA IGNORANTE 🍻</title>
+    <style>
+        :root {
+            --yellow: #ffff00;
+            --pink: #ff00ff;
+            --cyan: #00ffff;
+            --black: #000000;
+            --white: #ffffff;
+            --grey: #1a1a1a;
+        }
+
+        body {
+            background-color: var(--black);
+            color: var(--yellow);
+            font-family: 'Arial Black', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        #setup {
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        #timer-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #timer {
+            font-size: 5.5rem;
+            color: var(--cyan);
+            text-shadow: 5px 5px var(--pink);
+            line-height: 1;
+        }
+
+        #skip-btn {
+            background: var(--yellow);
+            color: var(--black);
+            border: none;
+            padding: 10px 25px;
+            font-family: 'Arial Black', sans-serif;
+            font-size: 1rem;
+            margin-top: 10px;
+            cursor: pointer;
+            box-shadow: 4px 4px 0 var(--pink);
+            text-transform: uppercase;
+        }
+
+        .question { 
+            font-size: 1.3rem; 
+            padding: 15px; 
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            width: 95%;
+            padding: 0;
+            pointer-events: none; /* Bloccate durante il timer */
+        }
+
+        .options li {
+            list-style: none;
+            background: var(--grey);
+            color: var(--white);
+            padding: 15px 5px;
+            font-size: 0.8rem;
+            border: 2px solid var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 80px;
+        }
+
+        .options.active {
+            pointer-events: auto;
+        }
+
+        .options.active li {
+            background: var(--pink);
+            color: var(--black);
+            border: 3px solid var(--cyan);
+            font-weight: bold;
+        }
+
+        .options li:active {
+            transform: scale(0.9);
+            background: var(--white) !important;
+        }
+
+        .strobo { animation: flash 0.1s infinite; }
+        @keyframes flash {
+            0% { background-color: #000; }
+            50% { background-color: #222; }
+            100% { background-color: #000; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="setup" onclick="startParty()">
+        <h1 style="font-size: 3rem; color: var(--pink); margin: 0;">MANDRIA</h1>
+        <h1 style="font-size: 3rem; color: var(--cyan); margin: 0;">IGNORANTE</h1>
+        <p style="font-size: 1.2rem; margin-top: 20px;">[ TOCCA PER ENTRARE ]<br>🔊🔊🔊</p>
+    </div>
+    
+    <div id="game-container" style="display:none;">
+        <div id="timer-container">
+            <div id="timer">60</div>
+            <button id="skip-btn" onclick="forceUnlock(event)">SKIP ⏩</button>
+        </div>
+        
+        <div class="question" id="q-text">MANDRIA IN CARICA...</div>
+        
+        <ul class="options" id="opt-list">
+            <li onclick="nextQuestion()"></li>
+            <li onclick="nextQuestion()"></li>
+            <li onclick="nextQuestion()"></li>
+            <li onclick="nextQuestion()"></li>
+        </ul>
+    </div>
+
+    <audio id="bg-music" loop preload="auto">
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const domande = [
+            { q: "Se un orfano fa una foto di famiglia, è un selfie?", a: ["Sì, purtroppo", "Errore di Matrix", "Black humor level 100", "Dov'è la mamma?"] },
+            { q: "Limite di spritz prima di chiamare l'ex?", a: ["3 (dilettante)", "7 (eroe)", "Portafoglio vuoto", "Non esiste"] },
+            { q: "Tuo cugino cade in un pozzo. Che fai?", a: ["Soccorsi", "Bevo una birra", "TikTok virale", "Chiedo se c'è acqua"] },
+            { q: "La Terra è piatta o tonda?", a: ["Piatta come il conto", "Tonda come la pancia", "A forma di spritz", "Ologramma"] },
+            { q: "Muto dice a sordo che cieco li spia. Chi mente?", a: ["Il cieco", "La tua mente", "Tutti e tre", "L'alcol"] },
+            { q: "Gatto in microonde. Cosa succede?", a: ["Diventa un Pokemon", "Cena pronta", "Denuncia", "Esplosione Tunz"] },
+            { q: "Se muoio oggi, chi paga il funerale?", a: ["Lo Stato", "Colletta al bar", "Resto lì finché puzzo", "I miei nemici"] },
+            { q: "Gesù camminava sulle acque perché:", a: ["Era magico", "Piedi asciutti", "Cercava un bar", "Acqua ghiacciata"] },
+            { q: "Cosa porti su un'isola deserta?", a: ["Una motosega", "Set di cicchetti", "La tua ex", "Wi-Fi rotto"] },
+            { q: "Modo migliore per lasciare qualcuno:", a: ["Ghosting violento", "WhatsApp alle 3 AM", "Mentre dorme", "Mai fidanzarsi"] },
+            { q: "Papa senza targa perché:", a: ["Fuorilegge", "Dio è il GPS", "Non lo fermano", "Massoneria"] },
+            { q: "Se rubi caramelle Rossana:", a: ["Inferno subito", "Sei un nonno", "Sei un eroe", "Ti arrestano"] },
+            { q: "Neuroni per ballare Techno?", a: ["Mezzo", "Nessuno", "Due", "Tutti bruciati"] },
+            { q: "La pensione è:", a: ["Mito greco", "Leggenda urbana", "Cosa sono i soldi?", "Per i boomer"] },
+            { q: "Peggio insulto in rissa:", a: ["Tua madre!", "Usi acqua naturale", "Tuo nonno sobrio", "Sembri sobrio"] },
+            { q: "Polizia ti ferma e sei sobrio:", a: ["Chiedi scusa", "Ti offendi", "Miracolo", "Errore sistema"] },
+            { q: "Cosa c'è dopo la morte?", a: ["Il vuoto", "Rave eterno", "È lunedì", "Conto da pagare"] },
+            { q: "Perché i cani si annusano?", a: ["Bluetooth", "Piacere", "Documenti", "Perché sì"] },
+            { q: "Se mangi 1kg di plutonio:", a: ["Hulk", "Muori", "Brilli", "Pulizia interna"] },
+            { q: "Cosa pensano i pesci di noi?", a: ["Siamo scemi", "Hanno fame", "Niente, bolle", "Vogliono birra"] }
+        ];
+
+        let currentQ = 0;
+        let timeLeft = 60;
+        let timerId;
+        const music = document.getElementById('bg-music');
+
+        function startParty() {
+            document.getElementById('setup').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+            
+            // Prova a far partire la musica con gestione errore
+            music.play().catch(e => console.log("Errore audio:", e));
+            
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if(currentQ >= domande.length) {
+                document.getElementById('q-text').innerText = "MANDRIA ESTINTA. TUTTI A CASA.";
+                document.getElementById('timer-container').style.display = 'none';
+                return;
+            }
+            
+            timeLeft = 60;
+            document.getElementById('timer').innerText = timeLeft;
+            const list = document.getElementById('opt-list');
+            list.classList.remove('active');
+            document.body.classList.remove('strobo');
+            
+            document.getElementById('q-text').innerText = domande[currentQ].q;
+            const items = list.getElementsByTagName('li');
+            for(let i=0; i<4; i++) {
+                items[i].innerText = domande[currentQ].a[i];
+            }
+            
+            clearInterval(timerId);
+            timerId = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            timeLeft--;
+            document.getElementById('timer').innerText = timeLeft;
+            if (timeLeft <= 0) unlock();
+        }
+
+        function forceUnlock(e) {
+            e.stopPropagation();
+            unlock();
+        }
+
+        function unlock() {
+            clearInterval(timerId);
+            document.getElementById('timer').innerText = "VOTATE!";
+            document.getElementById('opt-list').classList.add('active');
+            document.body.classList.add('strobo');
+            if (navigator.vibrate) navigator.vibrate([100, 50, 150]);
+        }
+
+        function nextQuestion() {
+            if (navigator.vibrate) navigator.vibrate(40);
+            currentQ++;
+            loadQuestion();
+        }
+    </script>
+</body>
+</html>
