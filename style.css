@@ -1,0 +1,110 @@
+
+        :root {
+            --yellow: #ffff00;
+            --pink: #ff00ff;
+            --cyan: #00ffff;
+            --black: #000000;
+            --white: #ffffff;
+            --grey: #1a1a1a;
+        }
+
+        body {
+            background-color: var(--black);
+            color: var(--yellow);
+            font-family: 'Arial Black', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        #setup {
+            cursor: pointer;
+            z-index: 10;
+            user-select: none; /* Impedisce che il testo venga selezionato col mouse */
+        }
+
+        #timer-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #timer {
+            font-size: 5.5rem;
+            color: var(--cyan);
+            text-shadow: 5px 5px var(--pink);
+            line-height: 1;
+        }
+
+        #skip-btn {
+            background: var(--yellow);
+            color: var(--black);
+            border: none;
+            padding: 10px 25px;
+            font-family: 'Arial Black', sans-serif;
+            font-size: 1rem;
+            margin-top: 10px;
+            cursor: pointer;
+            box-shadow: 4px 4px 0 var(--pink);
+            text-transform: uppercase;
+        }
+
+        .question { 
+            font-size: 1.3rem; 
+            padding: 15px; 
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            width: 95%;
+            padding: 0;
+            pointer-events: none; /* Bloccate durante il timer */
+        }
+
+        .options li {
+            list-style: none;
+            background: var(--grey);
+            color: var(--white);
+            padding: 15px 5px;
+            font-size: 0.8rem;
+            border: 2px solid var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 80px;
+        }
+
+        .options.active {
+            pointer-events: auto;
+        }
+
+        .options.active li {
+            background: var(--pink);
+            color: var(--black);
+            border: 3px solid var(--cyan);
+            font-weight: bold;
+        }
+
+        .options li:active {
+            transform: scale(0.9);
+            background: var(--white) !important;
+        }
+
+        .strobo { animation: flash 0.1s infinite; }
+        @keyframes flash {
+            0% { background-color: #000; }
+            50% { background-color: #222; }
+            100% { background-color: #000; }
+        }

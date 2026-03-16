@@ -2,141 +2,54 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>MANDRIA IGNORANTE 🍻</title>
+    <link rel="stylesheet" href="style.css">
     <style>
-        :root {
-            --yellow: #ffff00;
-            --pink: #ff00ff;
-            --cyan: #00ffff;
-            --black: #000000;
-            --white: #ffffff;
-            --grey: #1a1a1a;
-        }
-
-        body {
-            background-color: var(--black);
-            color: var(--yellow);
-            font-family: 'Arial Black', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            overflow: hidden;
-            text-align: center;
-        }
-
-        #setup {
-            cursor: pointer;
-            z-index: 10;
-        }
-
-        #timer-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        #timer {
-            font-size: 5.5rem;
-            color: var(--cyan);
-            text-shadow: 5px 5px var(--pink);
-            line-height: 1;
-        }
-
-        #skip-btn {
-            background: var(--yellow);
-            color: var(--black);
-            border: none;
-            padding: 10px 25px;
-            font-family: 'Arial Black', sans-serif;
-            font-size: 1rem;
-            margin-top: 10px;
-            cursor: pointer;
-            box-shadow: 4px 4px 0 var(--pink);
-            text-transform: uppercase;
-        }
-
-        .question { 
-            font-size: 1.3rem; 
-            padding: 15px; 
-            height: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-transform: uppercase;
-        }
-
-        .options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            width: 95%;
-            padding: 0;
-            pointer-events: none; /* Bloccate durante il timer */
-        }
-
-        .options li {
-            list-style: none;
-            background: var(--grey);
-            color: var(--white);
-            padding: 15px 5px;
-            font-size: 0.8rem;
-            border: 2px solid var(--white);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 80px;
-        }
-
-        .options.active {
-            pointer-events: auto;
-        }
-
-        .options.active li {
-            background: var(--pink);
-            color: var(--black);
-            border: 3px solid var(--cyan);
-            font-weight: bold;
-        }
-
-        .options li:active {
-            transform: scale(0.9);
-            background: var(--white) !important;
-        }
-
-        .strobo { animation: flash 0.1s infinite; }
-        @keyframes flash {
-            0% { background-color: #000; }
-            50% { background-color: #222; }
-            100% { background-color: #000; }
-        }
+        #settings-btn { position: fixed; top: 10px; right: 10px; z-index: 1000; cursor: pointer; font-size: 1.5rem; }
+        #settings-panel { position: fixed; top: 50px; right: 10px; background: rgba(0,0,0,0.8); padding: 10px; display: none; }
+        .screen { display: none; text-align: center; }
+        .active-screen { display: block; }
+        #skip-btn { display: none; margin-top: 20px; padding: 10px 20px; font-size: 1.2rem; }
+        #vote-counter { font-size: 1.2rem; margin: 10px 0; color: #fff; }
+        #slot-container { height: 100px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid var(--cyan); margin: 20px; display: none; font-size: 1.5rem; color: var(--pink); }
     </style>
 </head>
 <body>
 
-    <div id="setup" onclick="startParty()">
+    <div id="settings-btn" onclick="toggleSettings()">⚙️</div>
+    <div id="settings-panel">
+        <button onclick="toggleMusic()">Musica ON/OFF</button>
+    </div>
+
+    <div id="screen-1" class="screen active-screen" onclick="showConfig()">
         <h1 style="font-size: 3rem; color: var(--pink); margin: 0;">MANDRIA</h1>
         <h1 style="font-size: 3rem; color: var(--cyan); margin: 0;">IGNORANTE</h1>
-        <p style="font-size: 1.2rem; margin-top: 20px;">[ TOCCA PER ENTRARE ]<br>🔊🔊🔊</p>
+        <p>[ CLICCA PER ENTRARE ]</p>
+    </div>
+
+    <div id="screen-2" class="screen">
+        <h2>ISTRUZIONI</h2>
+        <p>Votate la vostra risposta. Quando tutti hanno scelto, premete avanti!</p>
+        <input type="number" id="num-q" min="1" max="10" value="5">
+        <br><br>
+        <button onclick="startGame()">INIZIA PARTITA</button>
     </div>
     
-    <div id="game-container" style="display:none;">
-        <div id="timer-container">
-            <div id="timer">60</div>
-            <button id="skip-btn" onclick="forceUnlock(event)">SKIP ⏩</button>
-        </div>
+    <div id="game-container" class="screen">
+        <div id="timer-container"><div id="timer">60</div></div>
+        <div id="vote-counter">Voti ricevuti: 0</div>
         
-        <div class="question" id="q-text">MANDRIA IN CARICA...</div>
+        <div id="slot-container"></div>
         
+        <div class="question" id="q-text">CARICAMENTO...</div>
         <ul class="options" id="opt-list">
-            <li onclick="nextQuestion()"></li>
-            <li onclick="nextQuestion()"></li>
-            <li onclick="nextQuestion()"></li>
-            <li onclick="nextQuestion()"></li>
+            <li onclick="selectOption(this, 0)"></li>
+            <li onclick="selectOption(this, 1)"></li>
+            <li onclick="selectOption(this, 2)"></li>
+            <li onclick="selectOption(this, 3)"></li>
         </ul>
+        <button id="skip-btn" onclick="showResult()">AVANTI ➡️</button>
     </div>
 
     <audio id="bg-music" loop preload="auto">
@@ -144,112 +57,91 @@
     </audio>
 
     <script>
-        const domande = [
-            { q: "Se un orfano fa una foto di famiglia, è un selfie?", a: ["Sì, purtroppo", "Errore di Matrix", "Black humor level 100", "Dov'è la mamma?"] },
-            { q: "Limite di spritz prima di chiamare l'ex?", a: ["3 (dilettante)", "7 (eroe)", "Portafoglio vuoto", "Non esiste"] },
-            { q: "Tuo cugino cade in un pozzo. Che fai?", a: ["Soccorsi", "Bevo una birra", "TikTok virale", "Chiedo se c'è acqua"] },
-            { q: "La Terra è piatta o tonda?", a: ["Piatta come il conto", "Tonda come la pancia", "A forma di spritz", "Ologramma"] },
-            { q: "Muto dice a sordo che cieco li spia. Chi mente?", a: ["Il cieco", "La tua mente", "Tutti e tre", "L'alcol"] },
-            { q: "Gatto in microonde. Cosa succede?", a: ["Diventa un Pokemon", "Cena pronta", "Denuncia", "Esplosione Tunz"] },
-            { q: "Se muoio oggi, chi paga il funerale?", a: ["Lo Stato", "Colletta al bar", "Resto lì finché puzzo", "I miei nemici"] },
-            { q: "Gesù camminava sulle acque perché:", a: ["Era magico", "Piedi asciutti", "Cercava un bar", "Acqua ghiacciata"] },
-            { q: "Cosa porti su un'isola deserta?", a: ["Una motosega", "Set di cicchetti", "La tua ex", "Wi-Fi rotto"] },
-            { q: "Modo migliore per lasciare qualcuno:", a: ["Ghosting violento", "WhatsApp alle 3 AM", "Mentre dorme", "Mai fidanzarsi"] },
-            { q: "Papa senza targa perché:", a: ["Fuorilegge", "Dio è il GPS", "Non lo fermano", "Massoneria"] },
-            { q: "Se rubi caramelle Rossana:", a: ["Inferno subito", "Sei un nonno", "Sei un eroe", "Ti arrestano"] },
-            { q: "Neuroni per ballare Techno?", a: ["Mezzo", "Nessuno", "Due", "Tutti bruciati"] },
-            { q: "La pensione è:", a: ["Mito greco", "Leggenda urbana", "Cosa sono i soldi?", "Per i boomer"] },
-            { q: "Peggio insulto in rissa:", a: ["Tua madre!", "Usi acqua naturale", "Tuo nonno sobrio", "Sembri sobrio"] },
-            { q: "Polizia ti ferma e sei sobrio:", a: ["Chiedi scusa", "Ti offendi", "Miracolo", "Errore sistema"] },
-            { q: "Cosa c'è dopo la morte?", a: ["Il vuoto", "Rave eterno", "È lunedì", "Conto da pagare"] },
-        
-  { "q": "Sveglia alle 7:00 dopo una serata. Cosa bevi per primo?", "o": ["Acqua gelata", "Caffè bollente", "Ancora alcol", "Succhi di frutta"] },
-  { "q": "L'outfit ignorante per eccellenza è:", "o": ["Canottiera e ciabatte", "Tuta acetata", "Camicia sbottonata", "Costume da bagno (anche in inverno)"] },
-  { "q": "Hai 5 euro in tasca. Cosa compri?", "o": ["Birra da 66cl", "Pacchetto di patatine", "Sigarette sfuse", "Gratta e vinci"] },
-  { "q": "Miglior insulto da usare nel traffico?", "o": ["Pezzo di fango", "Capra!", "Mavaffan...", "Silenzio e sguardo cattivo"] },
-  { "q": "Cosa fai se vedi un amico che sta per baciare un cesso?", "o": ["Lo fermo", "Faccio un video", "Incoraggio", "Mi unisco"] },
-  { "q": "Lo snack più ignorante da distributore?", "o": ["Fonzies", "Girella", "Schifezze piccanti", "Panino al tonno radioattivo"] },
-  { "q": "Quale superpotere vorresti dopo 4 drink?", "o": ["Invisibilità", "Vomito laser", "Teletrasporto a casa", "Fegato di titanio"] },
-  { "q": "L'accessorio che non può mancare al festeggiato?", "o": ["Corona di cartone", "Occhiali da sole (indoor)", "Sciarpa della squadra", "Bottiglia sempre in mano"] },
-  { "q": "Miglior posto per dormire se non arrivi al letto?", "o": ["Divano", "Tappeto", "Vasca da bagno", "Zerbino"] },
-  { "q": "Sei al karaoke: cosa canti per rovinare la festa?", "o": ["Gigi D'Alessio", "Sigla di Dragon Ball", "Metal pesante", "Nino D'Angelo"] },
-  { "q": "Qual è l'unità di misura dell'alcol stasera?", "o": ["Sorsi", "Bicchieri", "Bottiglie", "Coma"] },
-  { "q": "Miglior animale da compagnia per una vita ignorante?", "o": ["Maiale", "Oca", "Pitbull nano", "Tapiro"] },
-  { "q": "La serata sta morendo. Cosa fai?", "o": ["Metto la Techno", "Ordino 10 shot", "Inizio una rissa", "Vado a dormire"] },
-  { "q": "In discoteca ti approcci con:", "o": ["Sguardo magnetico", "Balli scoordinati", "Offro da bere", "Chiedo l'ora"] },
-  { "q": "Cosa c'è nel 'cocktail della casa' da 4 euro?", "o": ["Benzina", "Avanzi di magazzino", "Amore e odio", "Velasca"] },
-  { "q": "Se potessi cancellare un alcolico dal mondo?", "o": ["Gin", "Tequila", "Grappa", "Nessuno, sono tutti fratelli"] },
-  { "q": "Miglior scusa per non uscire stasera?", "o": ["Devo lavare i capelli", "C'è la serie tv", "Sono povero", "Ho già iniziato a bere da solo"] },
-  { "q": "Qual è il miglior gioco da spiaggia?", "o": ["Bocce", "Racchettoni", "Bere sotto l'ombrellone", "Scavare buche enormi"] },
-  { "q": "Se vincessi un milione di euro oggi:", "o": ["Li investo", "Compro un bar", "Festa eterna", "Sparisco"] },
-  { "q": "Chi berrà di più tra 10 minuti?", "o": ["Il più basso", "Il più alto", "Quello con gli occhiali", "Il festeggiato"] },
-            { q: "Perché i cani si annusano?", a: ["Bluetooth", "Piacere", "Documenti", "Perché sì"] },
-            { q: "Se mangi 1kg di plutonio:", a: ["Hulk", "Muori", "Brilli", "Pulizia interna"] },
-            { q: "Cosa pensano i pesci di noi?", a: ["Siamo scemi", "Hanno fame", "Niente, bolle", "Vogliono birra"] }
-        ];
-
-        let currentQ = 0;
-        let timeLeft = 60;
-        let timerId;
+        let domande = [], currentQ = 0, maxQ = 0, timeLeft = 60, timerId;
+        let votes = [0, 0, 0, 0], isResultView = false;
         const music = document.getElementById('bg-music');
 
-        function startParty() {
-            document.getElementById('setup').style.display = 'none';
-            document.getElementById('game-container').style.display = 'block';
-            
-            // Prova a far partire la musica con gestione errore
-            music.play().catch(e => console.log("Errore audio:", e));
-            
+        fetch('domande.json').then(res => res.json()).then(data => domande = data);
+
+        function toggleSettings() { document.getElementById('settings-panel').style.display = document.getElementById('settings-panel').style.display === 'block' ? 'none' : 'block'; }
+        function toggleMusic() { music.paused ? music.play() : music.pause(); }
+        function showConfig() { document.getElementById('screen-1').classList.remove('active-screen'); document.getElementById('screen-2').classList.add('active-screen'); }
+
+        function startGame() {
+            maxQ = Math.min(document.getElementById('num-q').value, 10);
+            document.getElementById('screen-2').classList.remove('active-screen');
+            document.getElementById('game-container').classList.add('active-screen');
+            music.play().catch(e => console.log("Audio attende interazione"));
             loadQuestion();
         }
 
         function loadQuestion() {
-            if(currentQ >= domande.length) {
-                document.getElementById('q-text').innerText = "MANDRIA ESTINTA. TUTTI A CASA.";
-                document.getElementById('timer-container').style.display = 'none';
+            if(currentQ >= maxQ) {
+                document.getElementById('q-text').innerText = "FINE.";
                 return;
             }
-            
-            timeLeft = 60;
-            document.getElementById('timer').innerText = timeLeft;
-            const list = document.getElementById('opt-list');
-            list.classList.remove('active');
-            document.body.classList.remove('strobo');
+            isResultView = false; votes = [0, 0, 0, 0];
+            document.getElementById('vote-counter').innerText = "Voti ricevuti: 0";
+            document.getElementById('skip-btn').style.display = 'none';
+            document.getElementById('slot-container').style.display = 'none';
+            document.getElementById('q-text').style.display = 'block';
+            document.getElementById('opt-list').style.pointerEvents = 'auto';
             
             document.getElementById('q-text').innerText = domande[currentQ].q;
-            const items = list.getElementsByTagName('li');
-            for(let i=0; i<4; i++) {
-                items[i].innerText = domande[currentQ].a[i];
-            }
+            const items = document.getElementById('opt-list').getElementsByTagName('li');
+            for(let i=0; i<4; i++) { items[i].innerText = domande[currentQ].a[i]; items[i].style.background = ''; }
             
             clearInterval(timerId);
-            timerId = setInterval(updateTimer, 1000);
+            timeLeft = 60; document.getElementById('timer').innerText = timeLeft;
+            timerId = setInterval(() => { timeLeft--; document.getElementById('timer').innerText = timeLeft; if (timeLeft <= 0) unlock(); }, 1000);
         }
 
-        function updateTimer() {
-            timeLeft--;
-            document.getElementById('timer').innerText = timeLeft;
-            if (timeLeft <= 0) unlock();
+        function selectOption(el, index) {
+            votes[index]++;
+            document.getElementById('vote-counter').innerText = "Voti ricevuti: " + votes.reduce((a,b) => a+b, 0);
+            document.getElementById('skip-btn').style.display = 'inline-block';
         }
 
-        function forceUnlock(e) {
-            e.stopPropagation();
-            unlock();
-        }
-
-        function unlock() {
+        function showResult() {
+            if (isResultView) { currentQ++; loadQuestion(); return; }
             clearInterval(timerId);
-            document.getElementById('timer').innerText = "VOTATE!";
-            document.getElementById('opt-list').classList.add('active');
-            document.body.classList.add('strobo');
-            if (navigator.vibrate) navigator.vibrate([100, 50, 150]);
+            const maxVotes = Math.max(...votes);
+            const winners = votes.map((v, i) => v === maxVotes ? i : -1).filter(i => i !== -1);
+            
+            if (winners.length > 1) {
+                runSlotMachine(winners);
+            } else {
+                finalizeResult(winners[0]);
+            }
         }
 
-        function nextQuestion() {
-            if (navigator.vibrate) navigator.vibrate(40);
-            currentQ++;
-            loadQuestion();
+        function runSlotMachine(winners) {
+            const slot = document.getElementById('slot-container');
+            slot.style.display = 'flex';
+            document.getElementById('q-text').style.display = 'none';
+            let i = 0;
+            const spin = setInterval(() => {
+                slot.innerText = domande[currentQ].a[winners[i % winners.length]];
+                i++;
+            }, 100);
+            setTimeout(() => {
+                clearInterval(spin);
+                finalizeResult(winners[Math.floor(Math.random() * winners.length)]);
+            }, 2000);
         }
+
+        function finalizeResult(index) {
+            document.getElementById('slot-container').style.display = 'none';
+            document.getElementById('q-text').style.display = 'block';
+            document.getElementById('q-text').innerText = "VINCITORE: " + domande[currentQ].a[index];
+            // Colora solo il vincitore
+            document.getElementById('opt-list').getElementsByTagName('li')[index].style.background = 'var(--pink)';
+            document.getElementById('skip-btn').style.display = 'inline-block';
+            document.getElementById('skip-btn').innerText = "PROSSIMA DOMANDA ➡️";
+            isResultView = true;
+        }
+
+        function unlock() { clearInterval(timerId); document.getElementById('opt-list').style.pointerEvents = 'none'; }
     </script>
 </body>
 </html>
